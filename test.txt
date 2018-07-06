@@ -1,0 +1,77 @@
+sudo mount shore.engin.umich.edu:/volume1/UMFORDAVDATA /mnt/ngv
+sudo mount shore.engin.umich.edu:/volume2/fcav /mnt/fcav
+
+## transfer
+container-fn tensorflow-deeplab-datatransfer \
+      --dataset cityscapes \
+      --dataset-path /mnt/data/dataset/exp1/cityscapes-segmentation \
+      --output-path /mnt/data/dataset/exp1
+
+## train
+container-fn tensorflow-deeplab-train \
+      --dataset-path /mnt/data/dataset/exp1/tfrecord \
+      --output-path /mnt/data/dataset/exp1/train_on_train_set
+
+## evaluate
+container-fn tensorflow-deeplab-eval \
+      --dataset-path /mnt/data/dataset/exp1/tfrecord \
+      --trained-path /mnt/data/dataset/exp1/train_on_train_set/train \
+      --output-path /mnt/data/dataset/exp1/train_on_train_set
+
+## visualize
+container-fn tensorflow-deeplab-vis \
+      --dataset-path /mnt/data/dataset/exp1/tfrecord \
+      --trained-path /mnt/data/dataset/exp1/train_on_train_set/train \
+      --output-path /mnt/data/dataset/exp1/train_on_train_set
+
+container-fn tensorflow-deeplab-datatransfer \
+      --dataset ade20k \
+      --dataset-path None \
+      --output-path /mnt/data/dataset/exp1
+
+container-fn tensorflow-deeplab-datatransfer \
+      --dataset pascal_voc_seg \
+      --dataset-path /mnt/data/dataset/exp1/VOCdevkit \
+      --output-path /mnt/data/dataset/exp1
+
+container-fn tensorflow-deeplab-datatransfer \
+      --dataset cityscapes \
+      --dataset-path /mnt/data/dataset/exp1/cityscapes-segmentation \
+      --output-path /mnt/data/dataset/exp1
+
+      flags.DEFINE_integer('min_resize_value', None,
+                           'Desired size of the smaller image side.')
+
+
+container-fn torch-mc-cnn-feedforward \
+      --dataset-path /mnt/fcav/datasets/cityscapes \
+      --output-path /home/jiarui/Results/cityscapes_disparity1 \
+      --image-list-left /home/jiarui/Results/cityscapes_list/image_list_left.txt \
+      --image-list-right /home/jiarui/Results/cityscapes_list/image_list_right.txt
+
+container-fn torch-mc-cnn-feedforward-largeimg \
+      --dataset-path /mnt/fcav/datasets/cityscapes \
+      --output-path /home/jiarui/Results/cityscapes_disparity \
+      --image-list-left /home/jiarui/Results/cityscapes_list/image_list_left.txt \
+      --image-list-right /home/jiarui/Results/cityscapes_list/image_list_right.txt
+
+python monodepth_simple.py --image_path /home/jiarui/git/monodepth/images/frankfurt_000000_000294_000350_image.png \
+      --checkpoint_path /home/jiarui/git/monodepth/models/model_cityscapes \
+      --input_height 1024 \
+      --input_width 2048
+
+
+ssh jiaruixu@storm.engin.umich.edu
+bash
+
+watch -n 1 nvidia-smi
+
+nvidia-docker run -it --rm -v /mnt/fcav/self_training_segmentation:/mnt/fcav/self_training_segmentation deeplab
+nvidia-docker run -it --rm -v /mnt/fcav/self_training_segmentation:/mnt/fcav/self_training_segmentation deeplab
+
+tmux : open a session to run the code in ssh so that even if you closed terminal, the code is still running.
+tmux a
+
+from multiprocessing import pool
+
+
